@@ -1,74 +1,96 @@
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from dataset_analysis import analizar_csv
 import multilayer_perceptron_training as mpt
 import sign_language_images_to_csv as slitc
 import sign_language_prediction_single_file as slpsf
-import onnxruntime as rt
 import sign_language_prediction_real_time as slprt
-
+import onnxruntime as rt
 
 sess = None
 
+def run_csv_analysis():
+    csv_path = filedialog.askopenfilename(
+        title="Selecciona archivo CSV para análisis",
+        filetypes=[("CSV files", "*.csv")]
+    )
+    if csv_path:
+        analizar_csv(csv_path)
+
+
+# Funciones para los botones
 def make_new_csv():
-    print("Select your database directory: ")
-    database_path = input()
-    slitc.process_images_from_folders(database_path)
-    print("CSV file created.")
+    folder = filedialog.askdirectory(title="Selecciona la carpeta con las imágenes")
+    if folder:
+        slitc.process_images_from_folders(folder)
+        messagebox.showinfo("Éxito", "Archivo CSV creado correctamente.")
 
 def create_and_train_ANN():
-    print("Select your CSV file: ")
-    csv_path = input()
-    print("How many data do you want to use for testing?: ")
-    test_size = input()
-    mpt.create_and_train(csv_path, float(test_size))
-    print("ANN model created.")
+    csv_path = filedialog.askopenfilename(title="Selecciona archivo CSV", filetypes=[("CSV files", "*.csv")])
+    if csv_path:
+        test_size = simple_input("¿Cuántos datos deseas usar para prueba? (ej. 0.2)")
+        if test_size:
+            mpt.create_and_train(csv_path, float(test_size))
+            messagebox.showinfo("Éxito", "Modelo ANN creado.")
 
 def load_ANN():
     global sess
-    print("Select your ONNX file: ")
-    onnx_file = input()
-    sess = rt.InferenceSession(onnx_file)
-    print("ANN model loaded successfully")
+    onnx_path = filedialog.askopenfilename(title="Selecciona archivo ONNX", filetypes=[("ONNX files", "*.onnx")])
+    if onnx_path:
+        sess = rt.InferenceSession(onnx_path)
+        messagebox.showinfo("Modelo cargado", "Modelo ANN cargado exitosamente.")
 
 def test_ANN():
-    print("Select your test path: ")
-    test_path = input()
-    print("Select your test file name: ")
-    file_name = input()
-    slitc.process_image_from_route(test_path, file_name)
-    slpsf.predict_single_file(sess, './predict_landmarks.csv')
+    if sess is None:
+        messagebox.showwarning("Error", "Debes cargar un modelo primero.")
+        return
+    path = filedialog.askdirectory(title="Selecciona carpeta de prueba")
+    file = filedialog.askopenfilename(title="Selecciona imagen de prueba", filetypes=[("Imágenes", "*.png;*.jpg;*.jpeg")])
+    if path and file:
+        slitc.process_image_from_route(path, file.split("/")[-1])
+        result = slpsf.predict_single_file(sess, './predict_landmarks.csv')
+        messagebox.showinfo("Resultado", f"Predicción: {result}")
 
 def test_ANN_real_time():
-    import sign_language_prediction_real_time as slprt
+    if sess is None:
+        messagebox.showwarning("Error", "Debes cargar un modelo primero.")
+        return
     slprt.get_ANN(sess)
 
-while True:
-    print("\n")
-    print("Sign Language Recognizer")
-    print("0. Exit")
-    print("1. Make a new CSV.")
-    print("2. Create and train a new ANN.")
-    print("3. Load a trained ANN model.")
-    print("4. Test loaded ANN model.")
-    print("5. Test loaded ANN model in real time.")
-    print("Choose your option:")
-    userAction = input()
+def simple_input(prompt):
+    input_window = tk.Toplevel(root)
+    input_window.title("Entrada")
+    tk.Label(input_window, text=prompt).pack(padx=10, pady=10)
+    entry = tk.Entry(input_window)
+    entry.pack(pady=5)
 
-    if userAction == '5':
-        if sess is not None:
-            test_ANN_real_time()
-        else:
-            print("There is no loaded ANN model yet.")
-    elif userAction == '4':
-        if sess is not None:
-            test_ANN()
-        else:
-            print("There is no loaded ANN model yet.")
-    elif userAction == '3':
-        load_ANN()
-    elif userAction == '2':
-        create_and_train_ANN()
-    elif userAction == '1':
-        make_new_csv()
-    elif userAction == '0':
-        break
-    else:
-        print("No valid option.")
+    def submit():
+        input_window.result = entry.get()
+        input_window.destroy()
+
+    tk.Button(input_window, text="Aceptar", command=submit).pack(pady=10)
+    root.wait_window(input_window)
+    return getattr(input_window, 'result', None)
+
+# GUI principal
+root = tk.Tk()
+root.title("Traductor de Lenguaje de Señas")
+root.geometry("400x400")
+
+options = [
+    ("Crear CSV desde imágenes", make_new_csv),
+    ("Entrenar modelo ANN", create_and_train_ANN),
+    ("Cargar modelo ANN", load_ANN),
+    ("Probar modelo con imagen", test_ANN),
+    ("Probar modelo en tiempo real", test_ANN_real_time),
+    ("Análisis del CSV", run_csv_analysis)
+]
+
+for (text, func) in options:
+    btn = tk.Button(root, text=text, command=func, width=40, pady=10)
+    btn.pack(pady=5)
+
+exit_btn = tk.Button(root, text="Salir", command=root.quit, fg="white", bg="red", width=40, pady=10)
+exit_btn.pack(pady=20)
+
+root.mainloop()

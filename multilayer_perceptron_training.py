@@ -6,12 +6,13 @@ pip install pandas
 
 #Import library
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #Import modules and submodules from sklearn
 from sklearn.model_selection import train_test_split #Used to split data into 2 sets: one for training and another for testing
 from sklearn.neural_network import MLPClassifier #Classifier based on a MLP
 from sklearn.preprocessing import LabelEncoder #Used to convert categorical labels (text) into numerical values
-from sklearn.metrics import accuracy_score, classification_report #calculates the accuracy of the model, function that generates a 
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay  #calculates the accuracy of the model, function that generates a 
                                                                 # report with various performance metrics
 
 #Import ONNX for save the trained model
@@ -45,6 +46,15 @@ def create_and_train(csv_path, test_size): # data must be a CSV file directory
     # Evaluate performance
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred, target_names=label_encoder.classes_)
+
+    # Matriz de confusión
+    cm = confusion_matrix(y_test, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_encoder.classes_)
+    disp.plot(cmap=plt.cm.Blues)
+    plt.title("Matriz de Confusión del Modelo")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
     print("Precisión del modelo:", accuracy)
     print("\nReporte de clasificación:\n", report)
