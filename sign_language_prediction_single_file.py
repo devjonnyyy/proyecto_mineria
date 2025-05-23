@@ -35,7 +35,13 @@ def predict_single_file (ANN_model, file_path):
 
     # Do the prediction
     pred = ANN_model.run([output_name], {input_name: X_test.astype(np.float32)})[0]
-    pred = labels.get(str(pred[0]))
 
-    # Imprimir las predicciones
-    print(f"That letter is: {pred}")
+    # Convertimos correctamente el resultado a índice
+    pred_index = int(pred[0]) if isinstance(pred[0], (int, np.integer)) else int(np.argmax(pred))
+
+    # Usamos el índice para obtener la letra
+    predicted_letter = labels.get(str(pred_index), "Desconocido")
+
+    # Imprimimos y retornamos
+    print(f"That letter is: {predicted_letter}")
+    return predicted_letter

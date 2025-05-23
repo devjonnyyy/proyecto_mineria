@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog, messagebox
 from dataset_analysis import analizar_csv
 import multilayer_perceptron_training as mpt
@@ -41,15 +42,21 @@ def load_ANN():
         messagebox.showinfo("Modelo cargado", "Modelo ANN cargado exitosamente.")
 
 def test_ANN():
+    global sess, resultado_label
+
     if sess is None:
         messagebox.showwarning("Error", "Debes cargar un modelo primero.")
         return
+
     path = filedialog.askdirectory(title="Selecciona carpeta de prueba")
     file = filedialog.askopenfilename(title="Selecciona imagen de prueba", filetypes=[("Imágenes", "*.png;*.jpg;*.jpeg")])
     if path and file:
         slitc.process_image_from_route(path, file.split("/")[-1])
         result = slpsf.predict_single_file(sess, './predict_landmarks.csv')
-        messagebox.showinfo("Resultado", f"Predicción: {result}")
+
+        # Mostrar en un cuadro de diálogo
+        messagebox.showinfo("Resultado de la predicción", f"📷 Se detectó la letra: {result}")
+
 
 def test_ANN_real_time():
     if sess is None:
@@ -74,23 +81,33 @@ def simple_input(prompt):
 
 # GUI principal
 root = tk.Tk()
-root.title("Traductor de Lenguaje de Señas")
-root.geometry("400x400")
+root.title("Sistema de Traducción de Lengua de Señas")
+root.geometry("500x600")
 
-options = [
-    ("Crear CSV desde imágenes", make_new_csv),
-    ("Entrenar modelo ANN", create_and_train_ANN),
-    ("Cargar modelo ANN", load_ANN),
-    ("Probar modelo con imagen", test_ANN),
-    ("Probar modelo en tiempo real", test_ANN_real_time),
-    ("Análisis del CSV", run_csv_analysis)
-]
+style = ttk.Style()
+style.configure("TButton", padding=10, font=("Segoe UI", 10))
 
-for (text, func) in options:
-    btn = tk.Button(root, text=text, command=func, width=40, pady=10)
-    btn.pack(pady=5)
+# --- Sección de datos ---
+frame_datos = ttk.LabelFrame(root, text="📂 Datos", padding=20)
+frame_datos.pack(fill="both", padx=10, pady=10)
 
-exit_btn = tk.Button(root, text="Salir", command=root.quit, fg="white", bg="red", width=40, pady=10)
-exit_btn.pack(pady=20)
+ttk.Button(frame_datos, text="Crear CSV desde imágenes", command=make_new_csv).pack(pady=5, fill='x')
+ttk.Button(frame_datos, text="Análisis del CSV", command=run_csv_analysis).pack(pady=5, fill='x')
+
+# --- Sección de modelo ---
+frame_modelo = ttk.LabelFrame(root, text="🤖 Modelo ANN", padding=20)
+frame_modelo.pack(fill="both", padx=10, pady=10)
+
+ttk.Button(frame_modelo, text="Entrenar modelo", command=create_and_train_ANN).pack(pady=5, fill='x')
+ttk.Button(frame_modelo, text="Cargar modelo", command=load_ANN).pack(pady=5, fill='x')
+ttk.Button(frame_modelo, text="Probar con imagen", command=test_ANN).pack(pady=5, fill='x')
+ttk.Button(frame_modelo, text="Probar en tiempo real", command=test_ANN_real_time).pack(pady=5, fill='x')
+
+# Botón de salida
+tk.Button(root, text="Salir", command=root.quit, bg="red", fg="white", font=("Segoe UI", 10, "bold")).pack(pady=20, fill='x')
+
+# Área para mostrar resultados
+resultado_label = ttk.Label(root, text="", wraplength=450, justify="left", foreground="blue")
+resultado_label.pack(pady=10, padx=10)
 
 root.mainloop()
