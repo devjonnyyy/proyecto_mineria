@@ -11,10 +11,10 @@ def analizar_csv(csv_path):
     y = df.iloc[:, -1]   # Etiquetas
 
     # --- Estadísticas básicas ---
-    print("\n🔢 Número de muestras por clase:")
+    print("\n Número de muestras por clase:")
     print(y.value_counts())
 
-    print("\n📊 Estadísticas descriptivas de coordenadas:")
+    print("\n Estadísticas descriptivas de coordenadas:")
     print(X.describe())
 
     if X.isnull().values.any():
@@ -41,10 +41,3 @@ def analizar_csv(csv_path):
     plt.grid(axis='y')
     plt.show()
 
-    # Boxplot de las primeras 9 coordenadas
-    plt.figure(figsize=(15, 5))
-    sns.boxplot(data=X.iloc[:, :9])
-    plt.title("Boxplot de las primeras coordenadas")
-    plt.xticks(rotation=45)
-    plt.grid(True)
-    plt.show()
